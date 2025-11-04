@@ -22,9 +22,9 @@ class BlogRequest extends FormRequest
         }
 
         return [
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'sometimes|required|string',
-            'image' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ];
     }
 

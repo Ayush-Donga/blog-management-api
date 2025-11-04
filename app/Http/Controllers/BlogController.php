@@ -72,24 +72,27 @@ class BlogController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validated();
-
         $updateData = [];
 
-        if (isset($validated['title'])) {
-            $updateData['title'] = $validated['title'];
+        if ($request->has('title')) {
+            $updateData['title'] = $request->input('title');
         }
-        if (isset($validated['description'])) {
-            $updateData['description'] = $validated['description'];
+        if ($request->has('description')) {
+            $updateData['description'] = $request->input('description');
         }
         if ($request->hasFile('image')) {
             if ($blog->image_path && Storage::disk('public')->exists($blog->image_path)) {
                 Storage::disk('public')->delete($blog->image_path);
             }
             $updateData['image_path'] = $request->file('image')->store('blogs', 'public');
+        } elseif ($request->has('image') && $request->input('image') !== null) {
+            // Allow updating image_path with a string value
+            $updateData['image_path'] = $request->input('image');
         }
 
-        $blog->update($updateData);
+        if (!empty($updateData)) {
+            $blog->update($updateData);
+        }
 
         return response()->json($blog->fresh()->loadCount('likes'));
     }

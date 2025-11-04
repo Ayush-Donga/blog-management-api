@@ -1,0 +1,210 @@
+{
+    "info": {
+        "_postman_id": "blog-api-final-v1",
+        "name": "Blog Management API - FINAL",
+        "description": "Laravel 11 + Sanctum + MySQL | Full CRUD, Like Toggle, Search, Filter, Pagination, Image Upload",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "2|pV14GhrHh224ugbCwRCjSZyml0N3UFuOEjlRISuPb8078607",
+            "type": "string",
+            "description": "Update this after login"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. Login (Get Token)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"ayush@example.com\",\n    \"password\": \"password\"\n}",
+                    "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/login",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "login"]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "2. Create Blog",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "title",
+                            "value": "My First Blog",
+                            "type": "text"
+                        },
+                        {
+                            "key": "description",
+                            "value": "Created via Postman",
+                            "type": "text"
+                        },
+                        { "key": "image", "type": "file", "src": [] }
+                    ]
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/blogs",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs"]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "3. List Blogs (Latest)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/blogs?sort=latest&page=1",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs"],
+                    "query": [
+                        { "key": "sort", "value": "latest" },
+                        { "key": "page", "value": "1" }
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "4. List Blogs (Most Liked)",
+            "request": {
+                "method": "GET",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/blogs?sort=most_liked",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs"],
+                    "query": [{ "key": "sort", "value": "most_liked" }]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "5. Search Blogs",
+            "request": {
+                "method": "GET",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/blogs?search=test",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs"],
+                    "query": [{ "key": "search", "value": "test" }]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "6. Update Blog (PATCH)",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "title",
+                            "value": "UPDATED TITLE",
+                            "type": "text"
+                        },
+                        {
+                            "key": "description",
+                            "value": "Updated via PATCH",
+                            "type": "text"
+                        },
+                        { "key": "image", "type": "file", "src": [] }
+                    ]
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/blogs/17",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs", "17"]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "7. Like Toggle (Like → Unlike)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/blogs/17/like-toggle",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs", "17", "like-toggle"]
+                }
+            },
+            "response": [],
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Toggle works', function () {",
+                            "    const res = pm.response.json();",
+                            "    pm.expect(res.message).to.be.oneOf(['Liked', 'Unliked']);",
+                            "});"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Delete Blog",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    { "key": "Authorization", "value": "Bearer {{token}}" },
+                    { "key": "Accept", "value": "application/json" }
+                ],
+                "url": {
+                    "raw": "{{base_url}}/api/blogs/17",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "blogs", "17"]
+                }
+            },
+            "response": []
+        }
+    ]
+}
