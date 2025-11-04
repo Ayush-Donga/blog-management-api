@@ -55,9 +55,8 @@ class BlogController extends Controller
         $blogs = $query->paginate(10);
 
         // Add is_liked for logged-in user (using polymorphic)
-        $userId = Auth::id();
-        $blogs->getCollection()->transform(function ($blog) use ($userId) {
-            $blog->is_liked = $blog->likes->contains('user_id', $userId);
+        $blogs->getCollection()->transform(function ($blog) {
+            $blog->is_liked = auth()->check() && $blog->likes->contains('user_id', auth()->id());
             return $blog;
         });
 
@@ -68,20 +67,31 @@ class BlogController extends Controller
     public function update(BlogRequest $request, $id)
     {
         $blog = Blog::findOrFail($id);
+
         if ($blog->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validated();
 
+        $updateData = [];
+
+        if (isset($validated['title'])) {
+            $updateData['title'] = $validated['title'];
+        }
+        if (isset($validated['description'])) {
+            $updateData['description'] = $validated['description'];
+        }
         if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($blog->image_path);
-            $validated['image_path'] = $request->file('image')->store('blogs', 'public');
+            if ($blog->image_path && Storage::disk('public')->exists($blog->image_path)) {
+                Storage::disk('public')->delete($blog->image_path);
+            }
+            $updateData['image_path'] = $request->file('image')->store('blogs', 'public');
         }
 
-        $blog->update($validated);
+        $blog->update($updateData);
 
-        return response()->json($blog);
+        return response()->json($blog->fresh()->loadCount('likes'));
     }
 
     // BLOG-DELETE-API

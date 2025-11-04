@@ -25,8 +25,8 @@ class Blog extends Model
     }
 
     // Accessor for full image URL
-    public function getImagePathAttribute($value)
+    public function getImageUrlAttribute()
     {
-        return $value ? Storage::url($value) : null;
+        return $this->image_path ? asset('storage/' . $this->image_path) : null;
     }
 }
