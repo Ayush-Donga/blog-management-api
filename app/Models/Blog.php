@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class Blog extends Model
 {
@@ -14,6 +14,7 @@ class Blog extends Model
 
     protected $fillable = ['title', 'description', 'image_path', 'user_id'];
 
+    // === RELATIONSHIPS ===
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -24,8 +25,23 @@ class Blog extends Model
         return $this->morphMany(Like::class, 'likeable');
     }
 
-    // Accessor for full image URL
-    public function getImageUrlAttribute()
+    // === ACCESSORS (Dynamic Attributes) ===
+    protected $appends = ['is_liked', 'image_url'];
+
+    // Dynamic: is_liked for current logged-in user
+    public function getIsLikedAttribute(): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        return $this->likes()
+            ->where('user_id', Auth::id())
+            ->exists(); // Fast, uses index, no N+1
+    }
+
+    // Dynamic: full image URL
+    public function getImageUrlAttribute(): ?string
     {
         return $this->image_path ? asset('storage/' . $this->image_path) : null;
     }

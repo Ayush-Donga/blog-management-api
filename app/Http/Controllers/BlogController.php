@@ -35,15 +35,15 @@ class BlogController extends Controller
     // BLOG-LIST-API (with pagination, filters, search, is_liked)
     public function index(Request $request)
     {
-        $query = Blog::withCount('likes'); // For likes count
+        $query = Blog::withCount('likes');
 
-        // Search in title/description
         if ($search = $request->query('search')) {
-            $query->where('title', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
-        // Filters: most liked or latest
         $sort = $request->query('sort', 'latest');
         if ($sort === 'most_liked') {
             $query->orderBy('likes_count', 'desc');
@@ -51,14 +51,7 @@ class BlogController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        // Pagination (10 per page)
         $blogs = $query->paginate(10);
-
-        // Add is_liked for logged-in user (using polymorphic)
-        $blogs->getCollection()->transform(function ($blog) {
-            $blog->is_liked = auth()->check() && $blog->likes->contains('user_id', auth()->id());
-            return $blog;
-        });
 
         return response()->json($blogs);
     }
