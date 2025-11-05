@@ -35,6 +35,8 @@ class BlogController extends Controller
     // BLOG-LIST-API (with pagination, filters, search, is_liked)
     public function index(Request $request)
     {
+        $userId = Auth::id();
+
         $query = Blog::withCount('likes');
 
         if ($search = $request->query('search')) {
@@ -52,6 +54,21 @@ class BlogController extends Controller
         }
 
         $blogs = $query->paginate(10);
+
+        $likedBlogIds = [];
+        if ($userId) {
+            $likedBlogIds = Like::where('likeable_type', Blog::class)
+                ->whereIn('likeable_id', $blogs->pluck(value: 'id'))
+                ->where('user_id', $userId)
+                ->pluck('likeable_id')
+                ->toArray();
+        }
+
+        $blogs->getCollection()->transform(function ($blog) use ($likedBlogIds) {
+            $blog->is_liked = in_array($blog->id, $likedBlogIds);
+            $blog->image_url = $blog->image_path ? asset('storage/' . $blog->image_path) : null;
+            return $blog;
+        });
 
         return response()->json($blogs);
     }
