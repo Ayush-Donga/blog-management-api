@@ -37,38 +37,25 @@ class BlogController extends Controller
     {
         $userId = Auth::id();
 
-        $query = Blog::withCount('likes');
+        $query = Blog::query()
+            ->withCount('likes')
+            ->withExists([
+                'likes as is_liked' => fn($q) => $q->where('user_id', $userId)
+            ]);
 
         if ($search = $request->query('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
+            $query->where(fn($q) => $q->where('title', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%"));
         }
 
         $sort = $request->query('sort', 'latest');
-        if ($sort === 'most_liked') {
-            $query->orderBy('likes_count', 'desc');
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
+        $query->orderBy($sort === 'most_liked' ? 'likes_count' : 'created_at', 'desc');
 
         $blogs = $query->paginate(10);
 
-        $likedBlogIds = [];
-        if ($userId) {
-            $likedBlogIds = Like::where('likeable_type', Blog::class)
-                ->whereIn('likeable_id', $blogs->pluck(value: 'id'))
-                ->where('user_id', $userId)
-                ->pluck('likeable_id')
-                ->toArray();
-        }
-
-        $blogs->getCollection()->transform(function ($blog) use ($likedBlogIds) {
-            $blog->is_liked = in_array($blog->id, $likedBlogIds);
+        $blogs->getCollection()->transform(fn($blog) => tap($blog, function ($blog) {
             $blog->image_url = $blog->image_path ? asset('storage/' . $blog->image_path) : null;
-            return $blog;
-        });
+        }));
 
         return response()->json($blogs);
     }
